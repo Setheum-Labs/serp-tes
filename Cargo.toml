@@ -29,9 +29,9 @@ sp-std = { default-features = false, optional = true, version = '3.0.0' }
 frame-support = { default-features = false, version = '3.0.0' }
 frame-system = { default-features = false, version = '3.0.0' }
 
-orml-traits = { default-features = false, version = '0.3.2' }
-orml-tokens = { default-features = false, version = '0.3.2' }
-orml-utilities = { default-features = false, version = '0.3.2' }
+orml-traits = { default-features = false, version = '0.4.0' }
+orml-tokens = { default-features = false, version = '0.4.0' }
+orml-utilities = { default-features = false, version = '0.4.0' }
 
 num-rational = { default-features = false, version = '0.3.2' }
 
