@@ -21,7 +21,6 @@ version = '1.3.4'
 [dependencies]
 adapters = { default-features = false, package = 'storage-adapters', version = '0.4.1', git = 'https://github.com/Setheum-Labs/storage-adapters' }
 fetch-price = { default-features = false, package = 'fetch-price', version = '0.4.1', git = 'https://github.com/Setheum-Labs/fetch-price' }
-stp258 = { default-features = false, package = 'stp258', version = '0.4.1', git = 'https://github.com/Setheum-Labs/stp258' }
 serde = { version = "1.0.123", optional = true }
 sp-std = { default-features = false, optional = true, version = '3.0.0' }
 frame-support = { default-features = false, version = '3.0.0' }
@@ -44,11 +43,7 @@ std = [
     'frame-support/std',
     'frame-system/std',
     "num-rational/std",
-	"orml-traits/std",
-    "orml-tokens/std",
-    'orml-utilities/std',
 	"serde/std",
     "sp-runtime/std",
     "sp-std/std",
-	"stp258/std",
 ]
