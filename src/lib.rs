@@ -85,7 +85,7 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T>
 	where
-		Acmount = u64;
+		Amount = u64;
 	{
 		/// The supply was expanded by the amount.
 		ExpandedSupply(u64),
