@@ -27,18 +27,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_std::prelude::*;
-
 use adapters::{BoundedPriorityQueue, BoundedDeque};
 use codec::{Decode, Encode};
 use core::cmp::{max, min, Ord, Ordering};
 use fixed::{types::extra::U64, FixedU128};
 use frame_support::pallet_prelude::*;
 
-use stp258::*;
-use serp_market::*;
-
+use serml_traits::*;
 use num_rational::Ratio;
-use orml_traits::BasicCurrency;
 use sp_runtime::{
 	traits::{CheckedMul, Zero},
 	PerThing, Perbill, RuntimeDebug,
@@ -53,9 +49,9 @@ mod mock;
 mod tests;
 
 /// Expected price oracle interface. `fetch_price` must return the amount of SettCurrency exchanged for the tracked value.
-pub trait FetchPrice<Balance> {
+pub trait FetchPrice<CurrencyId> {
 	/// Fetch the current price.
-	fn fetch_price() -> Balance;
+	fn fetch_price() -> CurrencyId;
 }
 
 /// The pallet's configuration trait.
@@ -89,12 +85,13 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T>
 	where
-		Acmount = u64;
+		Amount = AmountOf<T>,
+		CurrencyId = CurrencyIdOf<T>
 	{
 		/// The supply was expanded by the amount.
-		ExpandedSupply(u64),
+		ExpandedSupply(CurrencyId, Amount),
 		/// The supply was contracted by the amount.
-		ContractedSupply(u64),
+		ContractedSupply(CurrencyId, Amount),
 	}
 );
 
@@ -106,7 +103,6 @@ decl_error! {
 		SettCurrencySupplyOverflow,
 		/// While trying to contract the supply, it underflowed.
 		SettCurrencySupplyUnderflow,
-		BalanceOverflow,
 		/// Something went very wrong and the price of the currency is zero.
 		ZeroPrice,
 		/// An arithmetic operation caused an overflow.
