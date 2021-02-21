@@ -85,12 +85,13 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T>
 	where
-		Amount = u64;
+		Amount = AmountOf<T>,
+		CurrencyId = CurrencyIdOf<T>
 	{
 		/// The supply was expanded by the amount.
-		ExpandedSupply(u64),
+		ExpandedSupply(CurrencyId, Amount),
 		/// The supply was contracted by the amount.
-		ContractedSupply(u64),
+		ContractedSupply(CurrencyId, Amount),
 	}
 );
 
@@ -102,7 +103,6 @@ decl_error! {
 		SettCurrencySupplyOverflow,
 		/// While trying to contract the supply, it underflowed.
 		SettCurrencySupplyUnderflow,
-		BalanceOverflow,
 		/// Something went very wrong and the price of the currency is zero.
 		ZeroPrice,
 		/// An arithmetic operation caused an overflow.
