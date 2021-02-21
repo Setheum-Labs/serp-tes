@@ -32,8 +32,8 @@ use codec::{Decode, Encode};
 use core::cmp::{max, min, Ord, Ordering};
 use fixed::{types::extra::U64, FixedU128};
 use frame_support::pallet_prelude::*;
-
-use serml_traits::*;
+use serp_market::*;
+use stp258::*;
 use num_rational::Ratio;
 use sp_runtime::{
 	traits::{CheckedMul, Zero},
