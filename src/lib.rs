@@ -25,6 +25,7 @@
 //! The `SerpTes` module depends on the `FetchPrice` module to feed the prices of the 
 //! currencies in to adjust the stablecoin supply.
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::unused_unit)]
 
 use sp_std::prelude::*;
 use adapters::{BoundedPriorityQueue, BoundedDeque};
