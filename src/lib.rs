@@ -34,7 +34,13 @@ use core::cmp::{max, min, Ord, Ordering};
 use fixed::{types::extra::U64, FixedU128};
 use frame_support::pallet_prelude::*;
 use serp_market::*;
-use stp258::*;
+use stp258::{
+	account::MergeAccount,
+	arithmetic::{Signed, SimpleArithmetic},
+	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency, BasicReservableCurrency,
+	LockIdentifier, SettCurrency, ExtendedSettCurrency, 
+	LockableSettCurrency, ReservableSettCurrency,
+};
 use num_rational::Ratio;
 use sp_runtime::{
 	traits::{CheckedMul, Zero},
