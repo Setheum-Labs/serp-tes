@@ -23,7 +23,6 @@ adapters = { default-features = false, package = 'storage-adapters', version = '
 fetch-price = { default-features = false, package = 'fetch-price', version = '0.4.1', git = 'https://github.com/Setheum-Labs/fetch-price' }
 stp258 = { default-features = false, package = 'stp258', version = '0.4.1', git = 'https://github.com/Setheum-Labs/stp258' }
 serp-market = { default-features = false, package = 'serp-market', version = '0.4.1', git = 'https://github.com/Setheum-Labs/serp-market' }
-
 serde = { version = "1.0.123", optional = true }
 sp-std = { default-features = false, optional = true, version = '3.0.0' }
 frame-support = { default-features = false, version = '3.0.0' }

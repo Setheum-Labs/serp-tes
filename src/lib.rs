@@ -25,6 +25,7 @@
 //! The `SerpTes` module depends on the `FetchPrice` module to feed the prices of the 
 //! currencies in to adjust the stablecoin supply.
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::unused_unit)]
 
 use sp_std::prelude::*;
 use adapters::{BoundedPriorityQueue, BoundedDeque};
@@ -33,7 +34,13 @@ use core::cmp::{max, min, Ord, Ordering};
 use fixed::{types::extra::U64, FixedU128};
 use frame_support::pallet_prelude::*;
 use serp_market::*;
-use stp258::*;
+use stp258::{
+	account::MergeAccount,
+	arithmetic::{Signed, SimpleArithmetic},
+	BalanceStatus, BasicCurrency, BasicCurrencyExtended, BasicLockableCurrency, BasicReservableCurrency,
+	LockIdentifier, SettCurrency, ExtendedSettCurrency, 
+	LockableSettCurrency, ReservableSettCurrency,
+};
 use num_rational::Ratio;
 use sp_runtime::{
 	traits::{CheckedMul, Zero},

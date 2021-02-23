@@ -181,42 +181,36 @@ pub type Stp258 = Module<Runtime>;
 pub type NativeCurrency = NativeCurrencyOf<Runtime>;
 pub type AdaptedBasicCurrency = BasicCurrencyAdapter<Runtime, PalletBalances, i64, u64>;
 
+pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
+pub type UncheckedExtrinsic = sp_runtime::generic::UncheckedExtrinsic<u32, Call, u32, ()>;
+
+construct_runtime!(
+	pub enum Runtime where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Module, Call, Storage, Config, Event<T>},
+		Currencies: currencies::{Module, Call, Event<T>},
+		Tokens: orml_tokens::{Module, Storage, Event<T>, Config<T>},
+		PalletBalances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+
+	}
+);
+
 pub const ALICE: AccountId = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId = AccountId32::new([2u8; 32]);
 pub const EVA: AccountId = AccountId32::new([5u8; 32]);
-pub const ID_1: LockIdentifier = *b"1       ";
+pub const DNAR: LockIdentifier = *b"DNAR       ";
 
 
-// Build genesis storage according to the mock runtime.
+// Build genesis storage according to the mock runtime.-------------------------------
 pub fn new_test_ext() -> sp_io::TestExternalities {
     system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap()
         .into()
 }
-
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let shareholders: Vec<(AccountId, u64)> = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-		.into_iter()
-		.zip(iter::repeat(1))
-		.collect();
-	// make sure to run our storage build function to check config
-	let _ = GenesisConfig::<Test> { shareholders }.assimilate_storage(&mut storage);
-	storage.into()
-}
-
-pub fn new_test_ext_with(shareholders: Vec<AccountId>) -> sp_io::TestExternalities {
-	let mut storage = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	let shareholders: Vec<(AccountId, u64)> = shareholders.into_iter().zip(iter::repeat(1)).collect::<Vec<PathBuf>>();
-	// make sure to run our storage build function to check config
-	let _ = GenesisConfig::<Test> { shareholders }.assimilate_storage(&mut storage);
-	storage.into()
-}
-
-///-----------------------------------------------------------------------------------
-
-
 
 pub struct ExtBuilder {
 	endowed_accounts: Vec<(AccountId, CurrencyId, Balance)>,
