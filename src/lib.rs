@@ -4,8 +4,8 @@
 //!
 //! The SERP-TES (Setheum Elastic Reserve Protocol - Token Elasticity of Supply) 
 //! module provides a token elasticity system for the SERP-STP258 mixed stablecoin system, 
-//! by configuring an expansion which implements an `expand_supply` to expand stablecoin supply
-//! and a `contract_supply` which contracts the stablecoin supply.
+//! by configuring an expansion which implements an `expand_supply` (Sett-Mint) to expand stablecoin supply
+//! and a `contract_supply` (Dinar-Mint) which contracts the stablecoin supply.
 //!
 //! Then to determine whether the SERP should expand or contract supply, the TES provides
 //! a `serp_elast` to tell the TES when to expand and when to contract supply depending on 
@@ -13,7 +13,7 @@
 //!
 //! It also provides a `hand_out_settcurrency` that implements an adapter to hand out the 
 //! newly minted stablecoin to the shareholders of the SERP.
-//! TODO: Also handout 25% of each `expand_supply` to the validators of the network as per the
+//! TODO: Also handout 25% of each `expand_supply` (Sett-Mint) to the validators of the network as per the
 //! Setheum white paper.
 //!
 //! The serp-tes module provides functionality of both the `Stp258` module that needs 
@@ -95,9 +95,9 @@ decl_event!(
 		Amount = AmountOf<T>,
 		CurrencyId = CurrencyIdOf<T>
 	{
-		/// The supply was expanded by the amount.
+		/// The supply was expanded by the amount. Sett-Mint
 		ExpandedSupply(CurrencyId, Amount),
-		/// The supply was contracted by the amount.
+		/// The supply was contracted by the amount. Dinar-Mint
 		ContractedSupply(CurrencyId, Amount),
 	}
 );
