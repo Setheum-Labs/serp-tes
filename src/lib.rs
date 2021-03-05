@@ -186,68 +186,12 @@ fn expand_supply(settcurrency_supply: Self::CurrencyId, amount: Self::Amount) ->
 		.ok_or(Error::<T>::SettCurrencySupplyOverflow)?;
 	let new_supply = settcurrency_supply + amount;
 	native::info!("expanded supply by minting {} {} sett currency", currency_id, amount);
-	for settcurrency_supply in new_supply {
-		// relies on supply being updated in `hand_out_settcurrency`
-		Self::hand_out_settcurrency(&Self::shares(), new_supply)
-			.expect("settcurrency supply overflow was checked at the beginning of function; qed");
-    } 
     <SettCurrencySupply>::put(new_supply);
 	}
 	Self::deposit_event(RawEvent::ExpandedSupply(currency_id, amount));
 	Ok(())
 }
 
-/// Hand out SettCurrency to shareholders according to their number of shares.
-///
-/// Will hand out more SettCurrency to shareholders at the beginning of the list
-/// if the handout cannot be equal.
-///
-/// **Weight:**
-/// - complexity: `O(S + C)`
-///   - `S` being `shares.len()` (the number of shareholders)
-///   - `C` being a constant amount of storage reads and writes for SettCurrency supply
-/// - DB access:
-///   - 1 write for `settcurrency_supply`
-///   - `S` amount of writes
-fn hand_out_settcurrency(shares: &[(T::AccountId, u32)], amount: Self::Amount, settcurrency_supply: Self::CurrencyId) -> DispatchResult {
-	// Checking whether the supply will overflow.
-	settcurrency_supply
-		.checked_add(amount)
-		.ok_or(Error::<T>::SettCurrencySupplyOverflow)?;
-	// ↑ verify ↑
-	let share_supply: u64 = shares.iter().map(|(_a, s)| s).sum();
-	let len = shares.len() as u64;
-	// No point in giving out less than 1 unit of a SettCurrency.
-	let settcurrency_per_share = max(1, amount / share_supply);
-	let pay_extra = settcurrency_per_share * len < amount;
-	let mut amount_payed = 0;
-	// ↓ update ↓
-	for (i, (acc, num_shares)) in shares.iter().enumerate() {
-		if amount_payed >= amount {
-			break;
-		}
-		let max_payout = amount - amount_payed;
-		let is_in_first_mod_len = (i as u64) < amount % len;
-		let extra_payout = if pay_extra && is_in_first_mod_len { 1 } else { 0 };
-		let payout = min(max_payout, num_shares * settcurrency_per_share + extra_payout);
-		debug_assert!(
-			amount_payed + payout <= amount,
-			"amount payed out should be less or equal target amount"
-		);
-		Self::add_balance(&acc, payout);
-		amount_payed += payout;
-	}
-	debug_assert!(
-		amount_payed == amount,
-		"amount payed out should equal target amount"
-	);
-
-	// safe to do this late because of the test in the first line of the function
-	let new_supply = settcurrency_supply + amount;
-	<SettCurrencySupply>::put(new_supply);
-	native::info!("expanded supply by handing out settcurrency: {}", amount);
-	Ok(())
-}
 
 // ------------------------------------------------------------
 // on block - adjustment frequency
