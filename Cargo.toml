@@ -14,9 +14,7 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 sp-std = { default-features = false, optional = true, version = '3.0.0' }
 frame-support = { default-features = false, version = '3.0.0' }
 frame-system = { default-features = false, version = '3.0.0' }
-stp258 = { package = 'stp258', version = '0.5.4-dev', default-features = false, git = 'https://github.com/Setheum-Labs/stp258' }
-stp258-tokens = { package = 'stp258-tokens', version = '0.5.0-dev', default-features = false, git = 'https://github.com/Setheum-Labs/stp258-tokens' }
-serp-traits = { package = 'serp-traits', version = '0.5.0-dev', git = "https://github.com/Setheum-Labs/serp-traits"}
+stp258-traits = { package = 'stp258-traits', version = '0.5.0-dev', git = "https://github.com/Setheum-Labs/stp258-traits"}
 
 funty = { version = "1.1.0", default-features = false } # https://github.com/bitvecto-rs/bitvec/issues/105
 
@@ -37,7 +35,7 @@ std = [
     'frame-system/std',
 	"stp258/std",
 	"stp258-tokens/std",
-    "serp-traits/stp",
+    "stp258-traits/stp",
 	"serde/std",
     "sp-runtime/std",
     "sp-std/std",
