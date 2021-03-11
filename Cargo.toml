@@ -17,6 +17,7 @@ frame-support = { default-features = false, version = '3.0.0' }
 frame-system = { default-features = false, version = '3.0.0' }
 
 #setheum-deps
+serp-market = { default-features = false, version = "0.5.0-dev", git = "https://github.com/Setheum-Labs/serp-market", branch = "general-stable-currencies"}
 stp258-currencies = { default-features = false, version = "0.5.0-dev", git = 'https://github.com/Setheum-Labs/stp258-currencies' }
 stp258-tokens = { default-features = false, version = "0.5.0-dev", git = "https://github.com/Setheum-Labs/stp258-tokens"}
 stp258-traits = { default-features = false, version = "0.5.0-dev", git = "https://github.com/Setheum-Labs/stp258-traits" }
