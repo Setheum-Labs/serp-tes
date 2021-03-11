@@ -29,10 +29,11 @@ use fixed::{types::extra::U64, FixedU128};
 use frame_support::pallet_prelude::*;
 use stp258_traits::{
 	arithmetic::{Signed, SimpleArithmetic},
+	DataProvider
 	price::PriceProvider as TesPriceProvider,
 	serp_tes::SerpTes,
-	Stp258Asset, Stp258Currency, Stp258CurrencyExtended, 
-	Stp258CurrencyReservable, Stp258AssetReservable,
+	serp_market::SerpMarket,
+	Stp258Asset, Stp258Currency,
 };
 use num_rational::Ratio;
 use sp_runtime::{
@@ -67,10 +68,6 @@ pub mod module {
 
 		/// The frequency of adjustments of the SettCurrency supply.
 		type ElastAdjustmentFrequency: Get<<Self as system::Trait>::BlockNumber;
-
-		/// The amount of SettCurrency that are meant to track the value. Example: A value of 1_000 when tracking
-		/// Dollars means that the SettCurrencys will try to maintain a price of 1_000 SettCurrency for 1$.
-		type BaseUnit: Get<u64>;
 	}
 
 	// Pallets use events to inform users when important changes are made.
@@ -91,17 +88,8 @@ pub mod module {
 	// Errors inform users that something went wrong.
 	// The possible errors returned by calls to this pallet's functions.
 	#[pallet::error]
-	pub enum Error<T> {
-			/// While trying to expand the supply, it overflowed.
-			SupplyOverflow,
-			/// While trying to contract the supply, it underflowed.
-			SupplyUnderflow,
 			/// Something went very wrong and the price of the currency is zero.
 			ZeroPrice,
-			/// An arithmetic operation caused an overflow.
-			GenericOverflow,
-			/// An arithmetic operation caused an underflow.
-			GenericUnderflow,
 	}
 
 	/// The frequency of adjustments for the Currency supply.
@@ -174,17 +162,17 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 				native::error!("currency price is zero!");
 				return Err(DispatchError::from(Error::<T>::ZeroPrice));
 			}
-			price if price > T::BaseUnit::get() => {
-				// safe from underflow because `price` is checked to be greater than `BaseUnit`
-				let supply = Pallet::<T>::total_issuance();
-				let contract_by = Self::calculate_supply_change(price, T::BaseUnit::get(), supply);
-				Self::contract_supply(supply, contract_by)?;
+			price if price > T::GetBaseUnit::get() => {
+				// safe from underflow because `price` is checked to be greater than `GetBaseUnit`
+				let supply = T::Currency::::total_issuance();
+				let contract_by = Self::calculate_supply_change(price, T::GetBaseUnit::get(), supply);
+				T::SerpMarket::contract_supply(supply, contract_by)?;
 			}
-			price if price < T::BaseUnit::get() => {
-				// safe from underflow because `price` is checked to be less than `BaseUnit`
-				let supply = Pallet::<T>::total_issuance();
-				let expand_by = Self::calculate_supply_change(T::BaseUnit::get(), price, supply);
-				Self::expand_supply(supply, expand_by)?;
+			price if price < T::GetBaseUnit::get() => {
+				// safe from underflow because `price` is checked to be less than `GetBaseUnit`
+				let supply = T::Currency::total_issuance();
+				let expand_by = Self::calculate_supply_change(T::GetBaseUnit::get(), price, supply);
+				T::SerpMarket:::expand_supply(supply, expand_by)?;
 			}
 			_ => {
 				native::info!("settcurrency price is equal to base as is desired --> nothing to do");
@@ -198,13 +186,13 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 		type Fix = FixedU128<U64>;
 		let fraction = Fix::from_num(numerator) / Fix::from_num(denominator) - Fix::from_num(1);
 		fraction.saturating_mul_int(supply as u128).to_num::<u64>()
-	}                          
+	}
 }
 
 /// A `PriceProvider` implementation based on price data from a `DataProvider`.
-pub struct SerpMarketPriceProvider<CurrencyId, Source>(PhantomData<(CurrencyId, Source)>);
+pub struct SerpTesPriceProvider<CurrencyId, Source>(PhantomData<(CurrencyId, Source)>);
 
-impl<CurrencyId, Source, Price> MarketPriceProvider<CurrencyId, Price> for SerpMarketPriceProvider<CurrencyId, Source>
+impl<CurrencyId, Source, Price> TesPriceProvider<CurrencyId, Price> for SerpTesPriceProvider<CurrencyId, Source>
 where
 	CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize,
 	Source: DataProvider<CurrencyId, Price>,
@@ -215,27 +203,5 @@ where
 		let quote_price = Source::get(&quote_currency_id)?;
 
 		base_price.checked_div(&quote_price)
-	}
-
-	/// Provide relative `serping_price` for two currencies
-    /// with additional `serp_quote`.
-	fn get_serpup_price(base_currency_id: CurrencyId, quote_currency_id: CurrencyId) -> Option<Price> {
-		let base_price = Source::get(&base_currency_id)?; // base currency price compared to currency (native currency could work best)
-		let quote_price = Source::get(&quote_currency_id)?;
-        let market_price = base_price.checked_div(&quote_price); // market_price of the currency.
-        let mint_rate = Perbill::from_percent(); // supply change of the currency.
-        let serp_quote = market_price.checked_add(Perbill::from_percent(&mint_rate * 2)); // serping_price of the currency.
-        serp_quote.checked_add(Perbill::from_percent(&mint_rate * 2)); 
-	}
-
-	/// Provide relative `serping_price` for two currencies
-    /// with additional `serp_quote`.
-	fn get_serpdown_price(base_currency_id: CurrencyId, quote_currency_id: CurrencyId) -> Option<Price> {
-		let base_price = Source::get(&base_currency_id)?; // base currency price compared to currency (native currency could work best)
-		let quote_price = Source::get(&quote_currency_id)?;
-        let market_price = base_price.checked_div(&quote_price); // market_price of the currency.
-        let mint_rate = Perbill::from_percent(); // supply change of the currency.
-        let serp_quote = market_price.checked_add(Perbill::from_percent(&mint_rate * 2)); // serping_price of the currency.
-        serp_quote.checked_add(Perbill::from_percent(&mint_rate * 2)); 
 	}
 }

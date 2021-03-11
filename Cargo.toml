@@ -12,9 +12,14 @@ version = '0.5.0-dev'
 serde = { version = "1.0.123", optional = true }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
 sp-std = { default-features = false, optional = true, version = '3.0.0' }
+
 frame-support = { default-features = false, version = '3.0.0' }
 frame-system = { default-features = false, version = '3.0.0' }
-stp258-traits = { package = 'stp258-traits', version = '0.5.0-dev', git = "https://github.com/Setheum-Labs/stp258-traits"}
+
+#setheum-deps
+stp258-currencies = { default-features = false, version = "0.5.0-dev", git = 'https://github.com/Setheum-Labs/stp258-currencies' }
+stp258-tokens = { default-features = false, version = "0.5.0-dev", git = "https://github.com/Setheum-Labs/stp258-tokens"}
+stp258-traits = { default-features = false, version = "0.5.0-dev", git = "https://github.com/Setheum-Labs/stp258-traits" }
 
 funty = { version = "1.1.0", default-features = false } # https://github.com/bitvecto-rs/bitvec/issues/105
 
@@ -31,15 +36,15 @@ sp-runtime = { default-features = false, version = '3.0.0' }
 default = ['std']
 std = [
     'codec/std',
+    "fixed/std",
     'frame-support/std',
     'frame-system/std',
-	"stp258/std",
-	"stp258-tokens/std",
-    "stp258-traits/stp",
+    "num-rational/std",
+	"num-traits/std",
 	"serde/std",
     "sp-runtime/std",
     "sp-std/std",
-    "fixed/std",
-    "num-rational/std",
-	"num-traits/std",
+    "stp258-currencies/std",
+    "stp258-tokens/std",
+    "stp258-traits/std",
 ]
