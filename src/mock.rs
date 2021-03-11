@@ -13,7 +13,7 @@ use sp_runtime::{
 	AccountId32, ModuleId,
 };
 
-use crate as stp258_currencies;
+use crate as serp_tes;
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -86,7 +86,7 @@ impl stp258_tokens::Config for Runtime {
 pub const STP258_NATIVE_ID: CurrencyId = 1;
 pub const STP258_TOKEN_ID: CurrencyId = 2;
 
-const STP258_BASE_UNIT: u64 = 1000;+
+const STP258_BASE_UNIT: u64 = 1000;
 
 parameter_types! {
 	pub const GetStp258NativeId: CurrencyId = STP258_NATIVE_ID;
@@ -100,6 +100,16 @@ impl stp258_currencies::Config for Runtime {
 	type GetStp258NativeId = GetStp258NativeId;
 	type GetBaseUnit = GetBaseUnit;
 	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const GetSettPayAcc: AccountId = SETT_PAY_ACC;
+}
+
+impl serp_market::Config for Runtime {
+	type Event = Event;
+	type Market = Merket;
+	type GetSettPayAcc = GetSettPayAcc;
 }
 
 const ELAST_ADJUSTMENT_FREQUENCY: Blocknumber = 10;
@@ -116,7 +126,7 @@ impl Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl DataProvider<u32, Price> for Runtime {
+impl SerpTesProvider<u32, Price> for Runtime {
 	fn get(currency: &u32) -> Option<Price> {
 		match currency {
 			0 => Some(Price::from_inner(0)),
@@ -127,7 +137,7 @@ impl DataProvider<u32, Price> for Runtime {
 	}
 }
 
-type TesPriceProvider = SerpTesPriceProvider<Runtime, u32>;
+pub type TesPriceProvider = SerpTesPriceProvider<Runtime, u32>;
 pub type Stp258Native = Stp258NativeOf<Runtime>;
 pub type AdaptedStp258Asset = Stp258AssetAdapter<Runtime, PalletBalances, i64, u64>;
 
@@ -143,7 +153,7 @@ construct_runtime!(
 		System: frame_system::{Module, Call, Storage, Config, Event<T>},
 		SerpTes: serp_tes::{Module, Call, Event<T>},
 		SerpMarket: serp_market::{Module, Call, Event<T>},
-		Stp258Currencies: stp258_currencies::{Module, Call, Event<T>},
+		Stp258Currency: stp258_currencies::{Module, Call, Event<T>},
 		Stp258Tokens: stp258_tokens::{Module, Storage, Event<T>, Config<T>},
 		PalletBalances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 	}
@@ -151,7 +161,7 @@ construct_runtime!(
 
 pub const ALICE: AccountId = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId = AccountId32::new([2u8; 32]);
-pub const EVA: AccountId = AccountId32::new([5u8; 32]);
+pub const SETT_PAY_ACC: AccountId = AccountId32::new([5u8; 32]);
 pub const ID_1: LockIdentifier = *b"1       ";
 
 pub struct ExtBuilder {
@@ -178,6 +188,13 @@ impl ExtBuilder {
 			(BOB, STP258_NATIVE_ID, 100),
 			(ALICE, STP258_TOKEN_ID, 100 * STP258_BASE_UNIT),
 			(BOB, STP258_TOKEN_ID, 100 * STP258_BASE_UNIT),
+		])
+	}
+	
+	pub fn one_hundred_for_sett_pay(self) -> Self {
+		self.balances(vec![
+			(SETT_PAY_ACC, STP258_NATIVE_ID, 100),
+			(SETT_PAY_ACC, STP258_TOKEN_ID, 100 * STP258_BASE_UNIT),
 		])
 	}
 

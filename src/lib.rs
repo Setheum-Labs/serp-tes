@@ -29,7 +29,7 @@ use fixed::{types::extra::U64, FixedU128};
 use frame_support::pallet_prelude::*;
 use stp258_traits::{
 	arithmetic::{Signed, SimpleArithmetic},
-	DataProvider
+	DataProvider as SerpTesProvider,
 	price::PriceProvider as TesPriceProvider,
 	serp_tes::SerpTes,
 	serp_market::SerpMarket,
@@ -156,7 +156,7 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 	/// - DB access:
 	///   - 1 read for total_issuance
 	///   - execute `expand_supply` OR execute `contract_supply` which have DB accesses
-	fn serp_elast(price: Price) -> DispatchResult {
+	fn serp_elast(currency_id: CurrencyId, price: Price) -> DispatchResult {
 		match price {
 			0 => {
 				native::error!("currency price is zero!");
@@ -165,14 +165,14 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 			price if price > T::GetBaseUnit::get() => {
 				// safe from underflow because `price` is checked to be greater than `GetBaseUnit`
 				let supply = T::Currency::::total_issuance();
-				let contract_by = Self::calculate_supply_change(price, T::GetBaseUnit::get(), supply);
-				T::SerpMarket::contract_supply(supply, contract_by)?;
+				let contract_by = Self::calculate_supply_change(currency_id: CurrencyId, price, T::GetBaseUnit::get(), supply);
+				T::SerpMarket::contract_supply(currency_id: CurrencyId, supply, to_settpay, to_market, contract_by)?;
 			}
 			price if price < T::GetBaseUnit::get() => {
 				// safe from underflow because `price` is checked to be less than `GetBaseUnit`
 				let supply = T::Currency::total_issuance();
-				let expand_by = Self::calculate_supply_change(T::GetBaseUnit::get(), price, supply);
-				T::SerpMarket:::expand_supply(supply, expand_by)?;
+				let expand_by = Self::calculate_supply_change(currency_id: CurrencyId, T::GetBaseUnit::get(), price, supply);
+				T::SerpMarket:::expand_supply(currency_id: CurrencyId, supply, to_settpay, to_market, expand_by)?;
 			}
 			_ => {
 				native::info!("settcurrency price is equal to base as is desired --> nothing to do");
@@ -182,20 +182,20 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 	}
 
 	/// Calculate the amount of supply change from a fraction given as `numerator` and `denominator`.
-	fn calculate_supply_change(numerator: u64, denominator: u64, supply: u64) -> u64 {
+	fn calculate_supply_change(currency_id: CurrencyId, numerator: u64, denominator: u64, supply: u64) -> u64 {
 		type Fix = FixedU128<U64>;
 		let fraction = Fix::from_num(numerator) / Fix::from_num(denominator) - Fix::from_num(1);
 		fraction.saturating_mul_int(supply as u128).to_num::<u64>()
 	}
 }
 
-/// A `PriceProvider` implementation based on price data from a `DataProvider`.
+/// A `TesPriceProvider` implementation based on price data from a `SerpTesProvider`.
 pub struct SerpTesPriceProvider<CurrencyId, Source>(PhantomData<(CurrencyId, Source)>);
 
 impl<CurrencyId, Source, Price> TesPriceProvider<CurrencyId, Price> for SerpTesPriceProvider<CurrencyId, Source>
 where
 	CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize,
-	Source: DataProvider<CurrencyId, Price>,
+	Source: SerpTesProvider<CurrencyId, Price>,
 	Price: CheckedDiv,
 {
 	fn get_price(base_currency_id: CurrencyId, quote_currency_id: CurrencyId) -> Option<Price> {
