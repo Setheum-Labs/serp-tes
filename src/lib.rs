@@ -166,13 +166,13 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 				// safe from underflow because `price` is checked to be greater than `GetBaseUnit`
 				let supply = T::Currency::::total_issuance();
 				let contract_by = Self::calculate_supply_change(currency_id: CurrencyId, price, T::GetBaseUnit::get(), supply);
-				T::SerpMarket::contract_supply(currency_id: CurrencyId, supply, to_settpay, to_market, contract_by)?;
+				T::SerpMarket::contract_supply(currency_id: CurrencyId, supply, contract_by)?;
 			}
 			price if price < T::GetBaseUnit::get() => {
 				// safe from underflow because `price` is checked to be less than `GetBaseUnit`
 				let supply = T::Currency::total_issuance();
 				let expand_by = Self::calculate_supply_change(currency_id: CurrencyId, T::GetBaseUnit::get(), price, supply);
-				T::SerpMarket:::expand_supply(currency_id: CurrencyId, supply, to_settpay, to_market, expand_by)?;
+				T::SerpMarket:::expand_supply(currency_id: CurrencyId, supply, expand_by)?;
 			}
 			_ => {
 				native::info!("settcurrency price is equal to base as is desired --> nothing to do");
