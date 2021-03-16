@@ -30,8 +30,6 @@ use frame_support::pallet_prelude::*;
 use stp258_traits::{
 	arithmetic::{Signed, SimpleArithmetic},
 	DataProvider as SerpTesProvider,
-	price::PriceProvider as TesPriceProvider,
-	serp_tes::SerpTes,
 	serp_market::SerpMarket,
 	Stp258Asset, Stp258Currency,
 };
@@ -54,48 +52,63 @@ pub use module::*;
 
 #[frame_support::pallet]
 pub mod module {
-	use super::*;
 
 	pub(crate) type BalanceOf<T> =
-		<<T as Config>::Currency as as Stp258Currency<<T as frame_system::Config>::AccountId>>::Balance;
+		<<T as Config>::Stp258StableCurrency as SettCurrency<<T as frame_system::Config>::AccountId>>::Balance;
 	pub(crate) type CurrencyIdOf<T> =
-		<<T as Config>::Currency as as Stp258Currency<<T as frame_system::Config>::AccountId>>::CurrencyId;
-	
+		<<T as Config>::Stp258StableCurrency as SettCurrency<<T as frame_system::Config>::AccountId>>::CurrencyId;
+	pub(crate) type AccountIdOf<T> =
+		<<T as Config>::Stp258Currency as SettCurrency<<T as frame_system::Config>::AccountId>>::AccountId;
+
 	/// The pallet's configuration trait.
 	pub trait  Config: frame_system::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
+		/// The price type
+		type Price = Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize;
+
+		/// The base_unit type
+		type BaseUnit = Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize;
+
+		/// The currency ID type
+		type CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize + Ord;
+
+		/// The stable currency (SettCurrency) type
+		type SettCurrency: SettCurrency<Self::AccountId>;
+
 		/// The frequency of adjustments of the SettCurrency supply.
 		type ElastAdjustmentFrequency: Get<<Self as system::Trait>::BlockNumber;
-	}
 
-	// Pallets use events to inform users when important changes are made.
-	// https://substrate.dev/docs/en/knowledgebase/runtime/events
-	#[pallet::event]
-	pub enum Event<T: Config> {
-		where
-			Amount = AmountOf<T>,
-			CurrencyId = CurrencyIdOf<T>
-		{
-			/// The supply was expanded by the amount. Sett-Mint - This 
-			ExpandedSupply(CurrencyId, Amount),
-			/// The supply was contracted by the amount. Dinar-Mint
-			ContractedSupply(CurrencyId, Amount),
-		}
+		/// The base_unit getter
+		#[pallet::constant]
+		type GetBaseUnit: Get<BaseUnit>;
 	}
 
 	// Errors inform users that something went wrong.
 	// The possible errors returned by calls to this pallet's functions.
 	#[pallet::error]
-			/// Something went very wrong and the price of the currency is zero.
-			ZeroPrice,
+	pub enum Error<T> {
+		/// Some wrong behavior
+		Wrong,
+		/// Something went very wrong and the price of the currency is zero.
+		ZeroPrice,
+		/// While trying to expand the supply, it overflowed.
+		SupplyOverflow,
+		/// While trying to contract the supply, it underflowed.
+		SupplyUnderflow,
+	}
 	}
 
-	/// The frequency of adjustments for the Currency supply.
-	pub struct ElastAdjustmentFrequency<BlockNumber> {
-		/// Number of blocks for adjustment frequency.
-		pub adjustment_frequency: BlockNumber,
+	#[pallet::event]
+	#[pallet::generate_deposit(fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// Serp Expand Supply successful. [currency_id, who, amount]
+		SerpedUpSupply(CurrencyIdOf<T>, BalanceOf<T>),
+		/// Serp Contract Supply successful. [currency_id, who, amount]
+		SerpedDownSupply(CurrencyIdOf<T>, BalanceOf<T>),
+		/// The New Price of Currency. [currency_id, price]
+		NewPrice(CurrencyIdOf<T>, BalanceOf<T>),
 	}
 
 	#[pallet::pallet]
@@ -111,97 +124,81 @@ pub mod module {
 		// These functions materialize as "extrinsics", which are often compared to transactions.
 		// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
 		//
-	
+
 		/// Adjust the amount of SettCurrency according to the price.
 		///
 		/// **Weight:**
 		/// - complexity: `O(F + P)`
-		///   - `F` being the complexity of `Price::get_price()`
+		///   - `F` being the complexity of `T::SerpMarket::Price::get_stable_price()`
 		///   - `P` being the complexity of `on_block_with_price`
+		#[weight = 0]
 		fn on_initialize(n: T::BlockNumber) {
-			let price = T::Price::get_price();
+			let price = T::SerpMarket::Price::get_stable_price();
 			Self::on_block_with_price(n, price).unwrap_or_else(|e| {
 				native::error!("could not adjust supply: {:?}", e);
 			});
 		}	
-	}
-}
 
-impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
-	type CurrencyId = CurrencyIdOf<T>;
-	type Balance = BalanceOf<T>;
+		// on block - adjustment frequency
 
-	// on block - adjustment frequency
+		/// Contracts or expands the supply based on conditions.
+		///
+		/// **Weight:**
+		/// Calls `serp_elast` (expand_or_contract_on_price) every `ElastAdjustmentFrequency` blocks.
+		/// - complexity: `O(P)` with `P` being the complexity of `serp_elast`
+		#[weight = 0]
+		fn on_block_with_price(block: T::BlockNumber, price: Price) -> DispatchResult {
+			// This can be changed to only correct for small or big price swings.
+			if block % T::ElastAdjustmentFrequency::get() == 0.into() {
+				Self::serp_elast(price)        
+			} else {
+				Ok(())
+			}
+		}
 
-	/// Contracts or expands the supply based on conditions.
-	///
-	/// **Weight:**
-	/// Calls `serp_elast` (expand_or_contract_on_price) every `ElastAdjustmentFrequency` blocks.
-	/// - complexity: `O(P)` with `P` being the complexity of `serp_elast`
-	fn on_block_with_price(block: T::BlockNumber, price: Price) -> DispatchResult {
-		// This can be changed to only correct for small or big price swings.
-		if block % T::ElastAdjustmentFrequency::get() == 0.into() {
-			Self::serp_elast(price)        
-		} else {
+		/// Calculate the amount of supply change from a fraction given as `numerator` and `denominator`.
+		fn calculate_supply_change(currency_id: CurrencyIdOf<T>, new_price: BalanceOf<T>) -> Self::Balance {
+			let base_unit = T::GetBaseUnit::get(); 
+			let supply = T::Stp258Currency::total_issuance(currency_id);
+			let fraction = new_price / base_unit;
+			let fractioned = fraction.saturating_sub(1);
+			fractioned.saturating_mul_int(supply);
 			Ok(())
 		}
-	}
 
-	/// Expands (if the price is too high) or contracts (if the price is too low) the SettCurrency supply.
-	///
-	/// **Weight:**
-	/// - complexity: `O(S + C)`
-	///   - `S` being the complexity of executing either `expand_supply` or `contract_supply`
-	///   - `C` being a constant amount of storage reads for SettCurrency supply
-	/// - DB access:
-	///   - 1 read for total_issuance
-	///   - execute `expand_supply` OR execute `contract_supply` which have DB accesses
-	fn serp_elast(currency_id: CurrencyId, price: Price) -> DispatchResult {
-		match price {
-			0 => {
-				native::error!("currency price is zero!");
-				return Err(DispatchError::from(Error::<T>::ZeroPrice));
+		/// Expands (if the price is too high) or contracts (if the price is too low) the SettCurrency supply.
+		///
+		/// **Weight:**
+		/// - complexity: `O(S + C)`
+		///   - `S` being the complexity of executing either `expand_supply` or `contract_supply`
+		///   - `C` being a constant amount of storage reads for SettCurrency supply
+		/// - DB access:
+		///   - 1 read for total_issuance
+		///   - execute `expand_supply` OR execute `contract_supply` which have DB accesses
+		#[weight = 0]
+		fn serp_elast(currency_id: CurrencyId, price: Price) -> DispatchResult {
+			let base_unit = T::GetBaseUnit;
+			let price = T::SerpMarket::Price::get_stable_price(currency_id, quote_price: Price);
+			match price {
+				0 => {
+					native::error!("currency price is zero!");
+					return Err(DispatchError::from(Error::<T>::ZeroPrice));
+				}
+				price if price > base_unit => {
+					// safe from underflow because `price` is checked to be less than `GetBaseUnit`
+					let expand_by = Self::calculate_currency_supply_change(currency_id, price);
+					T::SerpMarket::expand_supply(currency_id, expand_by)?;
+				}
+				price if price < base_unit => {
+					// safe from underflow because `price` is checked to be greater than `GetBaseUnit`
+					let contract_by = Self::calculate_currency_supply_change(currency_id, price);
+					T::SerpMarket::contract_supply(currency_id, contract_by)?;
+				}
+				_ => {
+					native::info!("settcurrency price is equal to base as is desired --> nothing to do");
+				}
 			}
-			price if price > T::GetBaseUnit::get() => {
-				// safe from underflow because `price` is checked to be greater than `GetBaseUnit`
-				let supply = T::Currency::::total_issuance();
-				let contract_by = Self::calculate_supply_change(currency_id: CurrencyId, price, T::GetBaseUnit::get(), supply);
-				T::SerpMarket::contract_supply(currency_id: CurrencyId, supply, contract_by)?;
-			}
-			price if price < T::GetBaseUnit::get() => {
-				// safe from underflow because `price` is checked to be less than `GetBaseUnit`
-				let supply = T::Currency::total_issuance();
-				let expand_by = Self::calculate_supply_change(currency_id: CurrencyId, T::GetBaseUnit::get(), price, supply);
-				T::SerpMarket:::expand_supply(currency_id: CurrencyId, supply, expand_by)?;
-			}
-			_ => {
-				native::info!("settcurrency price is equal to base as is desired --> nothing to do");
-			}
+			Ok(())
 		}
-		Ok(())
-	}
-
-	/// Calculate the amount of supply change from a fraction given as `numerator` and `denominator`.
-	fn calculate_supply_change(currency_id: CurrencyId, numerator: u64, denominator: u64, supply: u64) -> u64 {
-		type Fix = FixedU128<U64>;
-		let fraction = Fix::from_num(numerator) / Fix::from_num(denominator) - Fix::from_num(1);
-		fraction.saturating_mul_int(supply as u128).to_num::<u64>()
-	}
-}
-
-/// A `TesPriceProvider` implementation based on price data from a `SerpTesProvider`.
-pub struct SerpTesPriceProvider<CurrencyId, Source>(PhantomData<(CurrencyId, Source)>);
-
-impl<CurrencyId, Source, Price> TesPriceProvider<CurrencyId, Price> for SerpTesPriceProvider<CurrencyId, Source>
-where
-	CurrencyId: Parameter + Member + Copy + MaybeSerializeDeserialize,
-	Source: SerpTesProvider<CurrencyId, Price>,
-	Price: CheckedDiv,
-{
-	fn get_price(base_currency_id: CurrencyId, quote_currency_id: CurrencyId) -> Option<Price> {
-		let base_price = Source::get(&base_currency_id)?;
-		let quote_price = Source::get(&quote_currency_id)?;
-
-		base_price.checked_div(&quote_price)
 	}
 }
