@@ -9,21 +9,18 @@ use sp_runtime::traits::BadOrigin;
 
 use traits::SettCurrency;
 
-
 #[test]
-fn serp_elast_quickcheck() {
+fn on_initialize_should_work() {
 	
 }
 
 #[test]
-fn serp_elast_smoketest_should_work() {
-	new_test_ext().execute_with(|| {
-		
-	})
+fn on_block_with_price_should_work() {
+	
 }
 
 #[test]
-fn supply_change_calculation_should_work() {
+fn calculate_supply_change_should_work() {
 	let price = TEST_BASE_UNIT + 100;
 	let supply = u64::max_value();
 	let contract_by = SettCurrency::calculate_supply_change(price, TEST_BASE_UNIT, supply);
@@ -33,41 +30,14 @@ fn supply_change_calculation_should_work() {
 }
 
 #[test]
-fn serp_market_expand_supply_should_work() {
-	new_test_ext_with(vec![1]).execute_with(|| {
-		
-	});
-}
-
-#[test]
-fn serp_market_contract_supply_should_work() {
-	new_test_ext_with(vec![1]).execute_with(|| {
-		
-	});
-}
-
-#[test]
-fn get_price_should_work() {
-	assert_eq!(
-		TesPriceProvider::get_price(1, 2),
-		Some(Price::saturating_from_rational(1, 2))
-	);
-	assert_eq!(
-		TesPriceProvider::get_price(2, 1),
-		Some(Price::saturating_from_rational(2, 1))
-	);
-}
-
-#[test]
-fn price_is_none_should_not_panic() {
-	assert_eq!(TesPriceProvider::get_price(3, 3), None);
-	assert_eq!(TesPriceProvider::get_price(3, 1), None);
-	assert_eq!(TesPriceProvider::get_price(1, 3), None);
-}
-
-#[test]
-fn price_is_zero_should_not_panic() {
-	assert_eq!(TesPriceProvider::get_price(0, 0), None);
-	assert_eq!(TesPriceProvider::get_price(1, 0), None);
-	assert_eq!(TesPriceProvider::get_price(0, 1), Some(Price::from_inner(0)));
+fn serp_elast_contract_supply_should_work() {
+	ExtBuilder::default()
+		.five_hundred_thousand_for_sett_pay_n_serper()
+		.build()
+		.execute_with(|| {
+			let base_unit = T::GetBaseUnit;
+			let price = STP258_TOKEN_ID, 990;
+			assert_eq!(SerpMarket::get_stable_price(STP258_TOKEN_ID, price) 990);
+			assert_ok!(SerpTes::serp_elast(STP258_TOKEN_ID, price));
+		});
 }
