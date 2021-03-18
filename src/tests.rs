@@ -10,16 +10,6 @@ use sp_runtime::traits::BadOrigin;
 use traits::SettCurrency;
 
 #[test]
-fn on_initialize_should_work() {
-	
-}
-
-#[test]
-fn on_block_with_price_should_work() {
-	
-}
-
-#[test]
 fn calculate_supply_change_should_work() {
 	let price = TEST_BASE_UNIT + 100;
 	let supply = u64::max_value();

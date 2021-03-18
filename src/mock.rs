@@ -1,8 +1,8 @@
-//! Mock for the sert-tes module.
 //! Mocks for the Stp258 currencies module.
 
 #![cfg(test)]
 
+use std::convert::From;
 use super::*;
 use frame_support::{construct_runtime, parameter_types};
 use stp258_traits::parameter_type_with_key;
@@ -47,8 +47,6 @@ impl frame_system::Config for Runtime {
 
 type CurrencyId = u32;
 type Balance = u64;
-type Price = FixedU128;
-type BaseUnit = u64;
 
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
@@ -87,53 +85,38 @@ impl stp258_tokens::Config for Runtime {
 pub const STP258_NATIVE_ID: CurrencyId = 1;
 pub const STP258_TOKEN_ID: CurrencyId = 2;
 
-const STP258_BASE_UNIT:BaseUnit = 1000;
+const STP258_BASE_UNIT: Balance = 1000;
+
+const SERP_QUOTE_MULTIPLE: Balance = 2;
+const SERPER_RATIO: Balance = 25;
+const SETT_PAY_RATIO: Balance = 75;
+const SINGLE_UNIT: Balance = 1;
 
 parameter_types! {
 	pub const GetStp258NativeId: CurrencyId = STP258_NATIVE_ID;
-	pub const GetBaseUnit: BaseUnit =  STP258_BASE_UNIT;
+	pub const GetBaseUnit: Balance =  STP258_BASE_UNIT;
+	pub const GetSettPayAcc: AccountId = SETT_PAY_ACC;
+	pub const GetSerperAcc: AccountId = SERPER_ACC;
+	pub const GetSerpQuoteMultiple: Balance = SERP_QUOTE_MULTIPLE;
+	pub const GetSerperRatio: Balance = SERPER_RATIO;
+	pub const GetSettPayRatio: Balance = SETT_PAY_RATIO;
+	pub const GetSingleUnit: Balance = SINGLE_UNIT;
 }
 
-impl stp258_currencies::Config for Runtime {
+impl Config for Runtime {
 	type Event = Event;
 	type Stp258Currency = Stp258Tokens;
 	type Stp258Native = AdaptedStp258Asset;
 	type GetStp258NativeId = GetStp258NativeId;
 	type GetBaseUnit = GetBaseUnit;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const GetSettPayAcc: AccountId = SETT_PAY_ACC;
-}
-
-impl serp_market::Config for Runtime {
-	type Event = Event;
-	type GetNativeAssetId = GetNativeAssetId;
-	type SettCurrency = Stp258Currency;
-	type Price = Price;
-	type Quote = Quote;
-	type GetBaseUnit = GetBaseUnit;
-	type GetSerpQuoteMultiple = GetSerpQuoteMultiple;
 	type GetSettPayAcc = GetSettPayAcc;
 	type GetSerperAcc = GetSerperAcc;
-	type NativeAsset = AdaptedStp258Asset;
-}
-
-const ELAST_ADJUSTMENT_FREQUENCY: Blocknumber = 10;
-
-parameter_types! {
-	pub const ElastAdjustmentFrequency: Blocknumber =  ELAST_ADJUSTMENT_FREQUENCY;
-}
-
-impl Config for Runtime {
-	type Event = Event;
-	type SettCurrency = Stp258Currency;
-	type SerpMarket = SerpMarket;
-	type ElastAdjustmentFrequency = ElastAdjustmentFrequency;
+	type GetSerperRatio = GetSerperRatio;
+	type GetSettPayRatio = GetSettPayRatio;
+	type GetSerpQuoteMultiple = GetSerpQuoteMultiple;
+	type GetSingleUnit = GetSingleUnit;
 	type WeightInfo = ();
 }
-
 pub type Stp258Native = Stp258NativeOf<Runtime>;
 pub type AdaptedStp258Asset = Stp258AssetAdapter<Runtime, PalletBalances, i64, u64>;
 
@@ -148,8 +131,6 @@ construct_runtime!(
 	{
 		System: frame_system::{Module, Call, Storage, Config, Event<T>},
 		SerpTes: serp_tes::{Module, Call, Event<T>},
-		SerpMarket: serp_market::{Module, Call, Event<T>},
-		Stp258Currency: stp258_currencies::{Module, Call, Event<T>},
 		Stp258Tokens: stp258_tokens::{Module, Storage, Event<T>, Config<T>},
 		PalletBalances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 	}
@@ -157,6 +138,7 @@ construct_runtime!(
 
 pub const SERPER_ACC: AccountId = AccountId32::new([1u8; 32]);
 pub const SETT_PAY_ACC: AccountId = AccountId32::new([2u8; 32]);
+
 pub const ID_1: LockIdentifier = *b"1       ";
 
 pub struct ExtBuilder {
@@ -177,12 +159,12 @@ impl ExtBuilder {
 		self
 	}
 
-	pub fn two_hundred_thousand_for_sett_pay_n_serper(self) -> Self {
+	pub fn five_hundred_thousand_for_sett_pay_n_serper(self) -> Self {
 		self.balances(vec![
-			(SETT_PAY_ACC, STP258_NATIVE_ID, 200_000),
-			(SERPER_ACC, STP258_NATIVE_ID, 200_000),
-			(SETT_PAY_ACC, STP258_TOKEN_ID, 200_000 * STP258_BASE_UNIT),
-			(SERPER_ACC, STP258_TOKEN_ID, 200_000 * STP258_BASE_UNIT),
+			(SETT_PAY_ACC, STP258_NATIVE_ID, 500_000),
+			(SERPER_ACC, STP258_NATIVE_ID, 500_000),
+			(SETT_PAY_ACC, STP258_TOKEN_ID, 500_000 * STP258_BASE_UNIT),
+			(SERPER_ACC, STP258_TOKEN_ID, 500_000 * STP258_BASE_UNIT),
 		])
 	}
 
