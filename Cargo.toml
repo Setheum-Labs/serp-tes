@@ -39,6 +39,6 @@ std = [
 	"sp-io/std",
 	"frame-support/std",
 	"frame-system/std",
-	"stp258-traits/std",
+	"serp-traits/std",
 	"orml-utilities/std",
 ]

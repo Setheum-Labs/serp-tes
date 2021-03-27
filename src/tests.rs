@@ -8,6 +8,38 @@ use mock::{Event, *};
 use sp_runtime::traits::BadOrigin;
 
 #[test]
+fn on_serp_block_should_work() {
+	ExtBuilder::default()
+		.one_hundred_for_alice_n_bob_n_serper_n_settpay()
+		.build()
+		.execute_with(|| {
+			assert_eq!(Stp258Serp::total_issuance(JUSD), 400 * 1_000);
+			assert_ok!(Stp258Serp::on_serp_block(5, JUSD, 1_100, DNAR, 4_000));
+		});
+}
+
+#[test]
+fn supply_change_should_work() {
+	ExtBuilder::default()
+		.one_hundred_for_alice_n_bob_n_serper_n_settpay()
+		.build()
+		.execute_with(|| {
+			assert_eq!(Stp258Serp::total_issuance(JUSD), 400 * 1_000);
+			assert_eq!(Stp258Serp::supply_change(JUSD, 1_100), 40 * 1_000);
+		});
+}
+
+#[test]
+fn serp_elast_should_work() {
+	ExtBuilder::default()
+		.one_hundred_for_alice_n_bob_n_serper_n_settpay()
+		.build()
+		.execute_with(|| {
+			assert_ok!(Stp258Serp::serp_elast(JUSD, 1_100, DNAR, 4_000));
+		});
+}
+
+#[test]
 fn expand_supply_should_work() {
 	ExtBuilder::default()
 		.one_hundred_for_alice_n_bob_n_serper_n_settpay()
