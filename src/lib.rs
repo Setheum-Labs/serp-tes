@@ -3,7 +3,6 @@
 
 use codec::Codec;
 use frame_support::{
-	codec::{Encode, Decode, EncodeLike}
 	debug::native,
 	pallet_prelude::*,
 	traits::{
@@ -170,7 +169,7 @@ pub mod module {
 }
 
 impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
-	type BlockNumber: Encode + Decode + EncodeLike + Default + Clone;
+	type BlockNumber = BlockOf<T>;
 	/// Contracts or expands the currency supply based on conditions.
 	/// Filters through the conditions to see whether it's time to adjust supply or not.
 	fn on_serp_block(
@@ -190,7 +189,7 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 					native_currency_price,
 				)?;
 			} else {
-				native::info!("💸 This currency cannot be serped on block ({:?}).", now);
+				native::info!("💸 This currency ({:?}) cannot be serped on block.", stable_currency_id);
 			}
 		} else {
 			native::info!("💸 The native serping currency is not recognised.");
