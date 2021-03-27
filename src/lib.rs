@@ -15,7 +15,7 @@ use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 use stp258_traits::{
 	account::MergeAccount,
 	arithmetic::{Signed, SimpleArithmetic},
-	BalanceStatus, SerpMarket, Stp258Asset, Stp258AssetExtended, Stp258AssetLockable, Stp258AssetReservable,
+	BalanceStatus, SerpMarket, SerpTes, Stp258Asset, Stp258AssetExtended, Stp258AssetLockable, Stp258AssetReservable,
 	LockIdentifier, Stp258Currency, Stp258CurrencyExtended, Stp258CurrencyReservable, Stp258CurrencyLockable,
 };
 use orml_utilities::with_transaction_result;
@@ -53,6 +53,8 @@ pub mod module {
 		<<T as Config>::Stp258Currency as Stp258Currency<<T as frame_system::Config>::AccountId>>::CurrencyId;
 	pub(crate) type AmountOf<T> =
 		<<T as Config>::Stp258Currency as Stp258CurrencyExtended<<T as frame_system::Config>::AccountId>>::Amount;
+	pub(crate) type BlockOf<T> =
+		<<T as Config>::Stp258Currency as SerpTes<<T as frame_system::Config>::AccountId>>::BlockNumber;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -62,7 +64,8 @@ pub mod module {
 			+ Stp258CurrencyExtended<Self::AccountId>
 			+ Stp258CurrencyLockable<Self::AccountId>
 			+ Stp258CurrencyReservable<Self::AccountId>
-			+ SerpMarket<Self::AccountId>;
+			+ SerpMarket<Self::AccountId>
+			+ SerpTes<Self::AccountId>;
 
 		type Stp258Native: Stp258AssetExtended<Self::AccountId, Balance = BalanceOf<Self>, Amount = AmountOf<Self>>
 			+ Stp258AssetLockable<Self::AccountId, Balance = BalanceOf<Self>>
@@ -98,6 +101,10 @@ pub mod module {
 		SerpedUpSupply(CurrencyIdOf<T>, BalanceOf<T>),
 		/// Supply Contraction Successful. \[currency_id, contract_by\]
 		SerpedDownSupply(CurrencyIdOf<T>, BalanceOf<T>),
+		// Serp Elast Successful. \[currency_id, expand_by\]
+		SerpElast(CurrencyIdOf<T>),
+		/// On Serp Block Successful. \[currency_id, contract_by\]
+		OnSerpBlock(CurrencyIdOf<T>),
 	}
 
 	#[pallet::pallet]
@@ -161,6 +168,79 @@ pub mod module {
 	}
 }
 
+impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
+	type BlockNumber: Encode + Decode + EncodeLike + Default + Clone;
+	/// Contracts or expands the currency supply based on conditions.
+	/// Filters through the conditions to see whether it's time to adjust supply or not.
+	fn on_serp_block(
+		now: Self::Moment,
+		stable_currency_id: Self::CurrencyId,
+		stable_currency_price: Self::Balance, 
+		native_currency_id: Self::CurrencyId,
+		native_currency_price: Self::Balance, 
+	) -> DispatchResult {
+        if native_currency_id == T::GetStp258NativeId::get() {
+			if stable_currency_id != T::GetStp258NativeId::get() {
+				T::Stp258Currency::on_serp_block(
+					now,
+                    stable_currency_id,
+                    stable_currency_price,
+					native_currency_id, 
+					native_currency_price,
+				)?;
+			} else {
+				native::info!("💸 This currency cannot be serped on block ({:?}).", now);
+			}
+		} else {
+			native::info!("💸 The native serping currency is not recognised.");
+		}
+		Self::deposit_event(Event::OnSerpBlock(stable_currency_id));
+		Ok(())
+	}
+
+    /// Calculate the amount of supply change from a fraction.
+	fn supply_change(currency_id:  Self::CurrencyId, new_price: Self::Balance) -> Self::Balance {
+		let base_unit = T::Stp258Currency::base_unit(currency_id);
+		let supply = <Self as Stp258Currency<T::AccountId>>::total_issuance(currency_id);
+		let fraction = new_price * supply;
+		let fractioned = fraction / base_unit;
+		fractioned - supply
+	}
+
+    /// Expands (if the price is above pegbase) or contracts (if the price is below pegbase) 
+	/// the supply of SettCurrencies.
+	///
+	/// **Weight:**
+	/// - complexity: `O(S + C)`
+	///   - `S` being the complexity of executing either `expand_supply` or `contract_supply`
+	///   - `C` being a constant amount of storage reads for SettCurrency supply
+	/// - DB access:
+	///   - 1 read for total_issuance
+	///   - execute `expand_supply` OR execute `contract_supply` which have DB accesses
+	fn serp_elast(
+		stable_currency_id: Self::CurrencyId, 
+		stable_currency_price: Self::Balance, 
+		native_currency_id: Self::CurrencyId,
+		native_currency_price: Self::Balance,
+	) -> DispatchResult {
+        if native_currency_id == T::GetStp258NativeId::get() {
+			if stable_currency_id != T::GetStp258NativeId::get() {
+				T::Stp258Currency::serp_elast(
+                    stable_currency_id,
+                    stable_currency_price,
+					native_currency_id, 
+					native_currency_price,
+				)?;
+			} else {
+				native::info!("💸 Cannot serp serp native currency ({:?}).", native_currency_id);
+			}
+		} else {
+			native::info!("💸 The native serping currency is not recognised.");
+		}
+		Self::deposit_event(Event::SerpElast(stable_currency_id));
+		Ok(())
+	}
+}
 impl<T: Config> SerpMarket<T::AccountId> for Pallet<T> {
 	/// Called when `expand_supply` is received from the SERP by the SerpTes 
 	/// through the `on_expand_supply` trigger.

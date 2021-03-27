@@ -6,7 +6,7 @@ homepage = 'https://setheum.xyz'
 license = 'Apache-2.0 License'
 name = 'serp-tes'
 repository = 'https://github.com/Setheum-Labs/Setheum/'
-version = '0.5.2'
+version = '0.5.3'
 
 [dependencies]
 serde = { version = "1.0.111", optional = true }
@@ -18,7 +18,7 @@ sp-std = { version = "3.0.0", default-features = false }
 frame-support = { version = "3.0.0", default-features = false }
 frame-system = { version = "3.0.0", default-features = false }
 
-stp258-traits = { version = '0.5.2', git = "https://github.com/Setheum-Labs/stp258-traits", branch = "tes-markr" }
+serp-traits = { version = '0.5.3', git = "https://github.com/Setheum-Labs/serp-traits" }
 orml-utilities = { version = "0.4.0", default-features = false }
 
 funty = { version = "1.1.0", default-features = false } # https://github.com/bitvecto-rs/bitvec/issues/105
@@ -26,8 +26,8 @@ funty = { version = "1.1.0", default-features = false } # https://github.com/bit
 [dev-dependencies]
 sp-core = "3.0.0"
 pallet-balances = "3.0.0"
-stp258-tokens = { version = "0.5.2", git = "https://github.com/Setheum-Labs/stp258-tokens"}
-stp258-standard = { version = "0.5.2", git = "https://github.com/Setheum-Labs/stp258-standard"}
+stp258-serp = { version = "0.5.3", git = "https://github.com/Setheum-Labs/stp258-serp"}
+stp258-standard = { version = "0.5.3", git = "https://github.com/Setheum-Labs/stp258-standard"}
 
 [features]
 default = ["std"]
