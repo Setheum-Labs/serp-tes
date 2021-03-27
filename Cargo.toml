@@ -1,49 +1,44 @@
 [package]
 authors = ['Setheum Labs<https://github.com/Setheum-Labs>']
-description = 'serp-tes pallet template'
+description = 'Setheum Elastic Reserve Protocol (SERP) Token Elasticity of Supply (TES) -- (SERP-TES) Pallet'
 edition = '2018'
 homepage = 'https://setheum.xyz'
 license = 'Apache-2.0 License'
 name = 'serp-tes'
 repository = 'https://github.com/Setheum-Labs/Setheum/'
-version = '0.5.0-dev'
+version = '0.5.2'
 
 [dependencies]
-serde = { version = "1.0.123", optional = true }
+serde = { version = "1.0.111", optional = true }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
-sp-std = { default-features = false, optional = true, version = '3.0.0' }
+sp-runtime = { version = "3.0.0", default-features = false }
+sp-io = { version = "3.0.0", default-features = false }
+sp-std = { version = "3.0.0", default-features = false }
 
-frame-support = { default-features = false, version = '3.0.0' }
-frame-system = { default-features = false, version = '3.0.0' }
+frame-support = { version = "3.0.0", default-features = false }
+frame-system = { version = "3.0.0", default-features = false }
 
-#setheum-deps
-stp258-traits = { default-features = false, version = "0.5.0-dev", git = "https://github.com/Setheum-Labs/stp258-traits" }
+stp258-traits = { version = '0.5.2', git = "https://github.com/Setheum-Labs/stp258-traits", branch = "tes-markr" }
+orml-utilities = { version = "0.4.0", default-features = false }
 
 funty = { version = "1.1.0", default-features = false } # https://github.com/bitvecto-rs/bitvec/issues/105
 
-num-rational = { default-features = false, version = '0.3.2' }
-num-traits = { version = "0.2.14", default-features = false }
-fixed = { default-features = false, version = '1.6.0' }
-
 [dev-dependencies]
-sp-core = '3.0.0'
-sp-io = '3.0.0'
-sp-runtime = { default-features = false, version = '3.0.0' }
+sp-core = "3.0.0"
 pallet-balances = "3.0.0"
-stp258-tokens = { version = "0.5.0-dev", git = "https://github.com/Setheum-Labs/stp258-tokens"}
-
+stp258-tokens = { version = "0.5.2", git = "https://github.com/Setheum-Labs/stp258-tokens"}
+stp258-standard = { version = "0.5.2", git = "https://github.com/Setheum-Labs/stp258-standard"}
 
 [features]
-default = ['std']
+default = ["std"]
 std = [
-    'codec/std',
-    "fixed/std",
-    'frame-support/std',
-    'frame-system/std',
-    "num-rational/std",
-	"num-traits/std",
-	"serde/std",
-    "sp-runtime/std",
-    "sp-std/std",
-    "stp258-traits/std",
+	"serde",
+	"codec/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"sp-io/std",
+	"frame-support/std",
+	"frame-system/std",
+	"stp258-traits/std",
+	"orml-utilities/std",
 ]
