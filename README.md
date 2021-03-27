@@ -1,5 +1,5 @@
-# Setheum Elastic Reserve Protocol - SERP
-SERP-TES Pallet -- SERP-Token Elasticity of Supply
+# Setheum Elastic Reserve Protocol - TES (SERP-TES)
+SERP-TES Pallet -- SERP-Token Elasticity of Supply (SERP-TES) Serp Pallet.
 
 ## Overview
 
