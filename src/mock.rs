@@ -4,7 +4,7 @@
 
 use super::*;
 use frame_support::{construct_runtime, parameter_types};
-use stp258_traits::parameter_type_with_key;
+use serp_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -100,7 +100,7 @@ parameter_types! {
 	pub const AdjustmentFrequency: Blocknumber = ADJUSTMENT_FREQUENCY;
 }
 
-impl stp258_tokens::Config for Runtime {
+impl stp258_serp::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = i64;
@@ -117,7 +117,7 @@ impl stp258_tokens::Config for Runtime {
 	type GetSerperRatio = GetSerperRatio;
 	type GetSettPayRatio = GetSettPayRatio;
 	type GetSingleUnit = GetSingleUnit;
-	type OnDust = stp258_tokens::TransferDust<Runtime, DustAccount>;
+	type OnDust = stp258_serp::TransferDust<Runtime, DustAccount>;
 }
 
 pub const DNAR: CurrencyId = 1;
@@ -132,7 +132,7 @@ parameter_types! {
 
 impl stp258_standard::Config for Runtime {
 	type Event = Event;
-	type Stp258Currency = Stp258Tokens;
+	type Stp258Currency = Stp258Serp;
 	type Stp258Native = AdaptedStp258Asset;
 	type GetStp258NativeId = GetStp258NativeId;
 	type WeightInfo = ();
@@ -142,7 +142,7 @@ pub type AdaptedStp258Asset = Stp258AssetAdapter<Runtime, PalletBalances, i64, u
 
 impl Config for Runtime {
 	type Event = Event;
-	type Stp258Currency = Stp258Tokens;
+	type Stp258Currency = Stp258Serp;
 	type Stp258Native = AdaptedStp258Asset;
 	type GetStp258NativeId = GetStp258NativeId;
 	type WeightInfo = ();
@@ -160,7 +160,7 @@ construct_runtime!(
 		System: frame_system::{Module, Call, Storage, Config, Event<T>},
 		Serp: serp::{Module, Call, Event<T>},
 		Stp258Standard: stp258_standard::{Module, Call, Event<T>},
-		Stp258Tokens: stp258_tokens::{Module, Storage, Event<T>, Config<T>},
+		Stp258Serp: stp258_serp::{Module, Storage, Event<T>, Config<T>},
 		PalletBalances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 	}
 );
@@ -222,7 +222,7 @@ impl ExtBuilder {
 		.assimilate_storage(&mut t)
 		.unwrap();
 
-		stp258_tokens::GenesisConfig::<Runtime> {
+		stp258_serp::GenesisConfig::<Runtime> {
 			endowed_accounts: self
 				.endowed_accounts
 				.into_iter()
