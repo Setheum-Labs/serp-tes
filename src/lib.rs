@@ -3,6 +3,7 @@
 
 use codec::Codec;
 use frame_support::{
+	codec::{Encode, Decode, EncodeLike}
 	debug::native,
 	pallet_prelude::*,
 	traits::{
@@ -173,7 +174,7 @@ impl<T: Config> SerpTes<T::AccountId> for Pallet<T> {
 	/// Contracts or expands the currency supply based on conditions.
 	/// Filters through the conditions to see whether it's time to adjust supply or not.
 	fn on_serp_block(
-		now: Self::Moment,
+		now: Self::BlockNumber,
 		stable_currency_id: Self::CurrencyId,
 		stable_currency_price: Self::Balance, 
 		native_currency_id: Self::CurrencyId,
