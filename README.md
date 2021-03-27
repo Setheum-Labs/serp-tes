@@ -18,3 +18,31 @@ SERP-TES Pallet -- SERP-Token Elasticity of Supply (SERP-TES) Serp Pallet.
  contracted by the `SerpTes` module, which it has to do with the `SerpStaking` module to be 
  built in the next Milestone of the Serp Modules.
  
+## Test & Build
+
+Run `cargo build` to build.
+Run `cargo test` to test.
+
+'''
+build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly-2021-02-17
+        target: wasm32-unknown-unknown
+        default: true
+    - name: Install Wasm toolchain
+      run: rustup target add wasm32-unknown-unknown
+    - name: Install clippy
+      run: rustup component add clippy
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
+'''
