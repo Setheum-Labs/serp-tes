@@ -26,8 +26,8 @@ funty = { version = "1.1.0", default-features = false } # https://github.com/bit
 [dev-dependencies]
 sp-core = "3.0.0"
 pallet-balances = "3.0.0"
-stp258-serp = { version = "0.5.3", default-features = false }
-stp258-standard = { version = "0.5.3", default-features = false }
+stp258-serp = "0.5.3"
+stp258-standard = "0.5.3"
 
 [features]
 default = ["std"]
