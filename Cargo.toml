@@ -18,7 +18,7 @@ sp-std = { version = "3.0.0", default-features = false }
 frame-support = { version = "3.0.0", default-features = false }
 frame-system = { version = "3.0.0", default-features = false }
 
-serp-traits = { version = '0.5.3', git = "https://github.com/Setheum-Labs/serp-traits" }
+serp-traits = { version = '0.5.3', default-features = false }
 orml-utilities = { version = "0.4.0", default-features = false }
 
 funty = { version = "1.1.0", default-features = false } # https://github.com/bitvecto-rs/bitvec/issues/105
@@ -26,8 +26,8 @@ funty = { version = "1.1.0", default-features = false } # https://github.com/bit
 [dev-dependencies]
 sp-core = "3.0.0"
 pallet-balances = "3.0.0"
-stp258-serp = { version = "0.5.3", git = "https://github.com/Setheum-Labs/stp258-serp"}
-stp258-standard = { version = "0.5.3", git = "https://github.com/Setheum-Labs/stp258-standard"}
+stp258-serp = "0.5.3"
+stp258-standard = "0.5.3"
 
 [features]
 default = ["std"]
